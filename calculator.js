@@ -2,8 +2,8 @@ const input_element = document.querySelector(".input");
 const output_operation_element = document.querySelector(".output .value");
 const output_result_element = document.querySelector(".result .value");
 
-const OPERATORS = ["+", "-", "*", "/"];
-const POWER = "POWER(", FACTORIAL = "FACTORIAL(";
+const OPERATORS = ["+", "-", "*", "/", "**"];
+const FACTORIAL = "FACTORIAL(";
 
 let data = {
     operation: [],
@@ -34,8 +34,8 @@ let calculator_buttons = [
     {
         name : "square",
         symbol : "x²",
-        formula : POWER,
-        type : "math_function"
+        formula : "**2",
+        type : "operator"
     },
     {
         name : "open-parenthesis",
@@ -208,8 +208,8 @@ let calculator_buttons = [
     {
         name : "power",
         symbol : "x<span>y</span>",
-        formula : POWER,
-        type : "math_function"
+        formula : "**",
+        type : "operator"
     },
     {
         name : "ANS",
@@ -293,7 +293,15 @@ input_element.addEventListener("click", event => {
 
 function calculator(button) {
     if (button.type === "operator") {
-        data.operation.push(button.symbol);
+        if (button.name === "power") {
+            data.operation.push("^");
+        } else if (button.name === "square") {
+            data.operation.push("^");
+            data.operation.push(2);
+        } else {
+            data.operation.push(button.symbol);
+        }
+
         data.formula.push(button.formula);
 
     } else if (button.type === "number") {
@@ -313,21 +321,6 @@ function calculator(button) {
 
             data.operation.push(symbol);
             data.formula.push(formula);
-        } else if (button.name === "power") {
-            symbol = "^(";
-            formula = button.formula;
-
-            data.operation.push(symbol);
-            data.formula.push(formula);
-        } else if (button.name === "square") {
-            symbol = "^(";
-            formula = button.formula;
-
-            data.operation.push(symbol);
-            data.formula.push(formula);
-
-            data.operation.push("2)");
-            data.formula.push("2)");
         } else {
             symbol = button.symbol + "(";
             formula = button.formula + "(";
@@ -354,18 +347,10 @@ function calculator(button) {
     } else if (button.type === "calculate") {
         let formula_str = data.formula.join("");
 
-        let POWER_SEACH_RESULT = search(data.formula, POWER);
         let FACTORIAL_SEACH_RESULT = search(data.formula, FACTORIAL);
 
-        const BASES = powerBaseGetter(data.formula, POWER_SEACH_RESULT);
-        BASES.forEach(base => {
-            let toReplace = base + POWER;
-            let replacement = "Math.pow(" + base + ",";
-
-            formula_str = formula_str.replace(toReplace, replacement);
-        });
-
         const NUMBERS = factorialNumberGetter(data.formula, FACTORIAL_SEACH_RESULT);
+
         NUMBERS.forEach(factorial => {
             formula_str = formula_str.replace(factorial.toReplace, factorial.replacement);
         });
@@ -430,9 +415,7 @@ function factorialNumberGetter(formula, FACTORIAL_SEACH_RESULT) {
                 }
             });
 
-            let is_power = formula[previous_index] === POWER;
-
-            if ((is_operator && parentheses_count == 0) || is_power) {
+            if ((is_operator && parentheses_count == 0)) {
                 break;
             }
 
@@ -456,47 +439,6 @@ function factorialNumberGetter(formula, FACTORIAL_SEACH_RESULT) {
     });
 
     return numbers;
-}
-
-function powerBaseGetter(formula, POWER_SEACH_RESULT) {
-    let power_bases = [];
-
-    POWER_SEACH_RESULT.forEach(power_index => {
-        let base = [];
-        
-        let parentheses_count = 0;
-
-        let previous_index = power_index - 1;
-
-        while (previous_index >= 0) {
-            if (formula[previous_index] === "(") {
-                parentheses_count--;
-            }
-            if (formula[previous_index] === ")") {
-                parentheses_count++;
-            }
-
-            let is_operator = false;
-            OPERATORS.forEach(OPERATOR => {
-                if (formula[previous_index] === OPERATOR) {
-                    is_operator = true;
-                }
-            });
-
-            let is_power = formula[previous_index] === POWER;
-
-            if ((is_operator && parentheses_count == 0) || is_power) {
-                break;
-            }
-
-            base.unshift(formula[previous_index]);
-            previous_index--;
-        }
-
-        power_bases.push(base.join(""));
-    });
-
-    return power_bases;
 }
 
 function search(array, keyword) {
